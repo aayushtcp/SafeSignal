@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+html, body {
+  height: 100%;
+  margin: 0;
+  /* font */
+  /* font-family: "Josefin Sans", sans-serif;   */
+  font-family: "Montserrat Alternates", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex-grow: 1;
+}
+
+
+
+/* slider arrows */
+/* Change arrow color to black */
+.slick-prev::before,
+.slick-next::before {
+  position: relative;
+  color: rgb(216, 44, 216) !important;
+  left: 0px !important;
+  
+  /* font-size: 30px !important; */
+}

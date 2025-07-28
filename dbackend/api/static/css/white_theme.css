@@ -1,0 +1,18 @@
+/* Make background white */
+body, .content, .dashboard-module {
+    background-color: white !important;
+    color: black !important;
+}
+
+/* Optional: sidebar */
+.sidebar {
+    background-color: #f9f9f9 !important;
+    color: #333 !important;
+}
+
+/* Optional: header */
+.main-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #ccc;
+    color: black !important;
+}

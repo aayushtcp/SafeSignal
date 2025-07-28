@@ -1,0 +1,9 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "cmake.sourceDirectory": "D:/Natural Disaster/dmobile/windows/runner",
+    "python.analysis.extraPaths": [
+        "./dbackend/api",
+        "./dbackend/api",
+        "./dbackend"
+    ]
+}

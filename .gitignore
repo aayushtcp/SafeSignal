@@ -1,0 +1,12 @@
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+
+.env
+safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json
+firebase_options.dart
+firebase.js
+firebase.json
+firebase-messaging-sw.js
+google-services.json
