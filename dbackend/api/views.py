@@ -683,7 +683,6 @@ class HelpRequestViewSet(viewsets.ModelViewSet):
     queryset = UserHelp.objects.all()
     serializer_class = UserHelpSerializer
     permission_classes = [IsAuthenticated]
-    
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def claim_help_request(request, help_id):

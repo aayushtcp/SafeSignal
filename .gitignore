@@ -1,12 +1,98 @@
-android/.gradle/
-android/.idea/
-android/local.properties
-android/build/
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.Python
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.eggs/
+*.egg-info/
+build/
+dist/
 
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Django local data
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+logs/
+
+# Environment and secrets
 .env
+.env.*
+*.env
+*.key
+*.pem
+*.crt
+*.p12
 safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json
+
+# Project-specific generated / machine-local files
 firebase_options.dart
 firebase.js
-firebase.json
 firebase-messaging-sw.js
-google-services.json
+**/firebase.json
+**/google-services.json
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Node / frontend
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vite/
+**/.vite/
+dist/
+**/dist/
+coverage/
+**/coverage/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/build/
+**/*.iml
+
+# Android / Gradle
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+captures/
+
+# iOS / macOS
+ios/Pods/
+**/Pods/
+*.xcworkspace/xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+DerivedData/
+
+# Misc
+*.log

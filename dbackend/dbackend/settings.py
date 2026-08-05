@@ -29,14 +29,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', '1') in ('1', 'true', 'True', 'yes', 'YES')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # ASGI/WebSocket server — must be first
+    'channels',
     # For custom admin panel
     'jet.dashboard',
     'jet',
@@ -53,11 +55,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     # For abstract user
     'users',
-    'api',
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware', # for cors policy
     'django.middleware.common.CommonMiddleware',
@@ -72,7 +75,7 @@ ROOT_URLCONF = 'dbackend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'api' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -86,6 +89,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'dbackend.wsgi.application'
+ASGI_APPLICATION = 'dbackend.asgi.application'
+
+# In-memory channel layer — fine for single-process demo (no Redis)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 
 # Database
@@ -135,6 +146,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 # !For Abstract User Model
 AUTH_USER_MODEL = 'users.User'
@@ -155,23 +174,25 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
     "http://192.168.254.112:8000",
     "http://192.168.254.112:8081",
-    
-    # checking production
-    "http://localhost:3000",  # or whatever port your frontend runs on
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
     "http://192.168.254.112:8000",
     "http://192.168.254.112:8081",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # REST FRAMEWORKs
@@ -197,16 +218,23 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
 }
 
+# OpenWeatherMap (free tier) — used by check_weather / admin "Check Weather Now"
+OPENWEATHERMAP_API_KEY = os.environ.get('OPENWEATHERMAP_API_KEY', '')
+
 # # Construct the absolute path to the service account JSON file
 FIREBASE_CREDENTIALS_PATH = BASE_DIR / "api" / "static" / "safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json"
 
-# # Initialize Firebase
-# cred = credentials.Certificate(str(FIREBASE_CREDENTIALS_PATH))
-# firebase_admin.initialize_app(cred)
-
+# Initialize Firebase when credentials are present (optional in local/Docker)
 if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
-    firebase_admin.initialize_app(cred)
+    if FIREBASE_CREDENTIALS_PATH.exists():
+        cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+        firebase_admin.initialize_app(cred)
+    else:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Firebase credentials not found at %s — push notifications disabled.",
+            FIREBASE_CREDENTIALS_PATH,
+        )
     
     
 # ! Logger
@@ -229,7 +257,7 @@ LOGGING = {
 # ! Custom admin panel jet Django starts -----
 JET_DASHBOARD_APP = 'api'
 JET_SIDE_MENU_COMPACT = True
-JET_DEFAULT_THEME = 'light-blue'
+JET_DEFAULT_THEME = 'light-gray'
 JET_DASHBOARD_ENABLE = True
 JET_INDEX_DASHBOARD = 'api.dashboard.CustomIndexDashboard'
 JET_DEFAULT_INDEX_DASHBOARD = 'api.dashboard.CustomIndexDashboard'

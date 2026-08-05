@@ -1,0 +1,237 @@
+/* Minimal Jet admin shell — charts unchanged */
+
+body {
+    background: #f8fafc !important;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif !important;
+    color: #1e293b !important;
+}
+
+/* Header */
+#header {
+    background: #ffffff !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-radius: 0 !important;
+    text-transform: none !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+}
+
+/* SafeSignal Admin top-left branding bar */
+#branding {
+    background: #f8f8f6 !important;
+    background-color: #f8f8f6 !important;
+    color: #000000 !important;
+    border-bottom: 1px solid #e8e8e4 !important;
+}
+
+#branding h1,
+#branding h2,
+#branding #site-name,
+#branding #site-name a,
+#branding a,
+#branding a:visited {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+    text-transform: none !important;
+}
+
+#branding a:hover {
+    color: #111111 !important;
+}
+
+#branding .sidebar-header-menu-icon,
+#branding .sidebar-link-icon,
+#branding #branding-menu,
+#branding #branding-pin {
+    color: #000000 !important;
+    opacity: 1 !important;
+}
+
+#user-tools,
+#user-tools a {
+    color: #64748b !important;
+    font-weight: 400 !important;
+    text-transform: none !important;
+}
+
+#user-tools a:hover {
+    color: #0f172a !important;
+}
+
+/* Sidebar */
+.sidebar {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+}
+
+.sidebar-header-wrapper,
+.sidebar-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.sidebar-section {
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.sidebar-title,
+.sidebar-title-link,
+.sidebar-title-link:hover {
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+}
+
+.sidebar-link,
+.sidebar-link:visited {
+    color: #475569 !important;
+    padding: 7px 16px 7px 20px !important;
+    font-size: 13px !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.sidebar-link:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.sidebar-link.current,
+.sidebar-popup-list-item.current .sidebar-popup-list-item-link {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+.sidebar-link-icon,
+.sidebar-right-arrow,
+.sidebar-header-menu-icon {
+    color: #94a3b8 !important;
+    opacity: 0.85;
+}
+
+.sidebar-popup {
+    background: #ffffff !important;
+    border-left: 1px solid #e2e8f0 !important;
+}
+
+.sidebar-popup-title {
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-popup-list-item-link {
+    color: #475569 !important;
+}
+
+.sidebar-popup-list-item-link:hover,
+.sidebar-popup-list-item.current .sidebar-popup-list-item-link {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    padding: 10px 0 !important;
+}
+
+.breadcrumbs a {
+    color: #64748b !important;
+}
+
+/* Main content */
+#content {
+    background: transparent !important;
+}
+
+#content h1 {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+    font-size: 1.35rem !important;
+}
+
+/* Dashboard cards — clean frame around existing charts */
+.dashboard .module,
+.dashboard-module,
+.dashboard-item {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.dashboard-module h2,
+.dashboard-module h3,
+.dashboard .module h2 {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 12px 16px !important;
+}
+
+.dashboard-module .dashboard-item-content {
+    padding: 8px 12px 16px !important;
+}
+
+/* Tables & forms */
+.module,
+fieldset.module {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.module h2,
+.inline-group h2 {
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+#result_list,
+.results {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+}
+
+#result_list thead th {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.button,
+input[type="submit"],
+.submit-row input {
+    background: #0f172a !important;
+    border: none !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.button:hover,
+input[type="submit"]:hover {
+    background: #334155 !important;
+}
+
+/* Hide theme picker & reduce visual noise */
+.theme-chooser,
+.user-tools-contrast-block {
+    display: none !important;
+}
+
+#footer:empty {
+    display: none !important;
+}

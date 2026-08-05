@@ -158,3 +158,64 @@ class ImageUpload(models.Model):
     title = models.CharField(max_length=100)
     image = models.ImageField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class ChatMessage(models.Model):
+    """Area/city chat messages (user chat + system weather alerts)."""
+
+    MESSAGE_TYPES = [
+        ('user', 'User'),
+        ('system', 'System'),
+        ('bot', 'Bot'),
+    ]
+
+    area_name = models.CharField(max_length=100, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='chat_messages',
+    )
+    message = models.TextField()
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='user')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        who = self.user.username if self.user else 'system'
+        return f"[{self.area_name}] {who}: {self.message[:40]}"
+
+
+class Alert(models.Model):
+    """Disaster / weather alerts pushed to area chat rooms."""
+
+    SOURCE_CHOICES = [
+        ('user', 'User'),
+        ('system', 'System'),
+    ]
+    ALERT_TYPES = [
+        ('heat', 'Heat warning'),
+        ('cold', 'Cold warning'),
+        ('rain', 'Rain warning'),
+        ('other', 'Other'),
+    ]
+
+    area_name = models.CharField(max_length=100, db_index=True)
+    alert_type = models.CharField(max_length=20, choices=ALERT_TYPES, default='other')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='system')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    temperature_c = models.FloatField(null=True, blank=True)
+    rain_mm = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.source}] {self.alert_type} — {self.area_name}: {self.title}"

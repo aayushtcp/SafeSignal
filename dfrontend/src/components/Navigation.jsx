@@ -9,6 +9,7 @@ import {
   LogOut,
   Lock,
   Search,
+  MessageCircle,
   icons,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -95,6 +96,11 @@ const NewNavigation = () => {
       icon: <AiFillSafetyCertificate />,
       label: "Help",
       url: "/request-help",
+    },
+    {
+      icon: <MessageCircle />,
+      label: "Area Chat",
+      url: "/area-chat/kathmandu",
     },
     {
       icon: <IoPieChartSharp />,

@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    container_name: nd-backend
+    restart: unless-stopped
+    env_file:
+      - ./dbackend/.env
+    environment:
+      - DEBUG=0
+      - ALLOWED_HOSTS=*
+      - RUN_SAFESIGNAL_BOT=1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./dbackend/db.sqlite3:/app/db.sqlite3
+      - ./dbackend/media:/app/media
+      - ./dbackend/api/static/safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json:/app/api/static/safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/admin/login/', timeout=3)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        # Browser talks to backend on host-mapped port
+        VITE_API_URL: http://127.0.0.1:8000/api
+        VITE_API_URL_USER: http://127.0.0.1:8000/users
+        VITE_WS_URL: ws://127.0.0.1:8000
+    container_name: nd-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy

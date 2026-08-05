@@ -27,6 +27,7 @@ import { UserDetailsProvider } from "./context/UserDetailsContext.jsx";
 import { UserPreferencesProvider } from "./context/UserPreferencesContext.jsx";
 import PageNotFound from "./pages/PageNotFound.jsx";
 import About from "./pages/About.jsx";
+import AreaChat from "./pages/AreaChat.jsx";
 
 let urls = createBrowserRouter([
   {
@@ -131,6 +132,14 @@ let urls = createBrowserRouter([
                 <DisasterDetail />
               </DisastersProvider>
             </UserDetailsProvider>
+          </UsernameProvider>
+        ),
+      },
+      {
+        path: "/area-chat/:areaName?",
+        element: (
+          <UsernameProvider>
+            <AreaChat />
           </UsernameProvider>
         ),
       },

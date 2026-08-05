@@ -9,7 +9,6 @@ class DisasterPieChartModule(DashboardModule):
     title = 'Disasters by Type (Pie Chart)'
 
     def render(self):
-        # Get data from admin_views.py
         disaster_data = get_disaster_counts()
 
         labels = [item['disasterType'] for item in disaster_data]
@@ -59,25 +58,18 @@ class DisasterPieChartModule(DashboardModule):
         """)
 
 
-
-
 class DisasterContinentModule(DashboardModule):
     title = 'Disasters by Region'
 
     def render(self):
-        # Fetch region and count from DB
         disaster_data = disaster_counts_by_region()
 
-        # Extract region names and their counts
         labels = [item['continent'] for item in disaster_data]
         counts = [item['count'] for item in disaster_data]
 
-        # Convert to JSON for JS
         labels_json = json.dumps(labels)
         counts_json = json.dumps(counts)
 
-        # Return safe HTML and JS
-        # Define a list of colors for each bar (repeat if not enough)
         bar_colors = [
             'rgba(255, 99, 132, 0.8)',
             'rgba(255, 206, 86, 0.8)',
@@ -86,7 +78,6 @@ class DisasterContinentModule(DashboardModule):
             'rgba(153, 102, 255, 0.8)',
             'rgba(255, 159, 64, 0.8)'
         ]
-        # Repeat colors if there are more regions than colors
         background_colors = json.dumps([bar_colors[i % len(bar_colors)] for i in range(len(labels))])
 
         return mark_safe(f"""
@@ -128,13 +119,10 @@ class DisasterContinentModule(DashboardModule):
         """)
 
 
-
-
 class DisasterRateModule(DashboardModule):
     title = 'Disasters Over the Years (Line Chart)'
 
     def render(self):
-        # Fetch year and count from DB
         disaster_data = get_disaster_counts_by_year()
 
         labels = [item['year'] for item in disaster_data]

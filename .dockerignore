@@ -1,0 +1,26 @@
+.git
+.gitignore
+.vscode
+**/.DS_Store
+
+# Local envs / secrets (mounted at runtime)
+**/.env
+**/.env.*
+**/venv/
+**/.venv/
+
+# Dependencies & build artifacts
+**/node_modules/
+**/__pycache__/
+**/*.pyc
+**/staticfiles/
+dfrontend/dist/
+dmobile/
+
+# Large / unused for images
+**/.dart_tool/
+**/build/
+**/.pytest_cache/
+**/coverage/
+**/*.md
+README.md

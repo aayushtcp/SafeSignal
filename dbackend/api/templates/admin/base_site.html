@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/minimal_admin.css' %}?v=3">
+    <style id="safesignal-branding-fix">
+        /* Force SafeSignal Admin bar: off-white bg, black text */
+        html body #container #header #branding,
+        html body #header #branding,
+        #branding.initialized,
+        #branding {
+            background: #f7f7f5 !important;
+            background-color: #f7f7f5 !important;
+            background-image: none !important;
+            color: #000000 !important;
+            border-bottom: 1px solid #e5e5e0 !important;
+        }
+
+        html body #header #branding h1,
+        html body #header #branding h2,
+        html body #header #branding #site-name,
+        html body #header #branding #site-name a,
+        html body #header #branding a,
+        html body #header #branding a:visited,
+        html body #header #branding a:hover,
+        #branding h1,
+        #branding h2,
+        #branding a,
+        #branding a:visited,
+        #branding a:hover {
+            color: #000000 !important;
+            text-transform: none !important;
+        }
+
+        html body #header #branding #branding-menu,
+        html body #header #branding #branding-pin,
+        html body #header #branding .sidebar-header-menu-icon,
+        html body #header #branding .sidebar-link-icon,
+        #branding-menu,
+        #branding-pin,
+        #branding-menu:hover,
+        #branding-pin:hover {
+            color: #000000 !important;
+            opacity: 1 !important;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+    (function () {
+        function paintBranding() {
+            var el = document.getElementById('branding');
+            if (!el) return;
+            el.style.setProperty('background', '#f7f7f5', 'important');
+            el.style.setProperty('background-color', '#f7f7f5', 'important');
+            el.style.setProperty('color', '#000000', 'important');
+            el.querySelectorAll('a, h1, h2, span').forEach(function (node) {
+                node.style.setProperty('color', '#000000', 'important');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', paintBranding);
+        window.addEventListener('load', paintBranding);
+        setTimeout(paintBranding, 0);
+        setTimeout(paintBranding, 300);
+    })();
+    </script>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
