@@ -221,6 +221,14 @@ SIMPLE_JWT = {
 # OpenWeatherMap (free tier) — used by check_weather / admin "Check Weather Now"
 OPENWEATHERMAP_API_KEY = os.environ.get('OPENWEATHERMAP_API_KEY', '')
 
+# Groq (free tier) — SafeSignal AI /ask in area chat
+# Also accepts GROUPME_API_KEY if someone mistyped the name (gsk_ keys are Groq).
+GROQ_API_KEY = (
+    os.environ.get('GROQ_API_KEY', '').strip()
+    or os.environ.get('GROUPME_API_KEY', '').strip()
+)
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile').strip()
+
 # # Construct the absolute path to the service account JSON file
 FIREBASE_CREDENTIALS_PATH = BASE_DIR / "api" / "static" / "safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json"
 

@@ -87,10 +87,15 @@ class AreaConsumer(AsyncWebsocketConsumer):
             },
         )
 
-        # /update → fetch weather for this area and post as SafeSignal Bot
+        # /update → weather; /ask … → SafeSignal AI (Groq)
         cmd = message.lower().split()[0] if message else ''
         if cmd == '/update':
             await self.run_weather_update()
+        elif cmd == '/ask':
+            question = message[len(cmd):].strip()
+            user = self.scope.get('user')
+            user_key = f"{getattr(user, 'id', 'anon')}:{self.area_name}"
+            await self.run_ai_ask(question, user_key)
 
     async def area_event(self, event):
         """Forward chat/alert payloads to this socket."""
@@ -100,6 +105,14 @@ class AreaConsumer(AsyncWebsocketConsumer):
     def run_weather_update(self):
         from .bot import post_bot, weather_brief
         post_bot(self.area_name, weather_brief(self.area_name))
+
+    @database_sync_to_async
+    def run_ai_ask(self, question: str, user_key: str):
+        from .ai_assistant import answer_question
+        from .bot import post_bot
+
+        reply = answer_question(self.area_name, question, user_key=user_key)
+        post_bot(self.area_name, reply)
 
     @database_sync_to_async
     def save_message(self, message: str) -> dict:

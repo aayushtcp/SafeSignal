@@ -96,7 +96,7 @@ const AreaChatInner = () => {
             </h1>
           </div>
           <p className="text-stone-600 text-sm md:text-base">
-            Live chat and weather alerts for one area — one WebSocket connection.
+            Live chat, weather alerts, and SafeSignal AI — ask in English, Nepali, or Hindi.
           </p>
         </header>
 
@@ -147,6 +147,36 @@ const AreaChatInner = () => {
             {error}
           </p>
         )}
+
+        <p className="mb-2 text-sm text-stone-600">
+          Ask AI with{" "}
+          <code className="rounded bg-stone-200/80 px-1.5 py-0.5 text-stone-800 text-xs">
+            /ask …
+          </code>{" "}
+          · weather refresh with{" "}
+          <code className="rounded bg-stone-200/80 px-1.5 py-0.5 text-stone-800 text-xs">
+            /update
+          </code>
+        </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { label: "Weather now", text: "/ask What's the weather like right now?" },
+            { label: "आज मौसम", text: "/ask अहिले मौसम कस्तो छ?" },
+            { label: "आज मौसम (हिन्दी)", text: "/ask अभी मौसम कैसा है?" },
+            { label: "Nearby disasters", text: "/ask Any recent disasters or alerts near this area?" },
+            { label: "Safety tips", text: "/ask Give short earthquake safety tips for this area." },
+          ].map((chip) => (
+            <button
+              key={chip.label}
+              type="button"
+              disabled={!connected}
+              onClick={() => setDraft(chip.text)}
+              className="rounded-lg border border-emerald-200 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
 
         <AnimatePresence>
           {activeAlert && (
@@ -296,7 +326,7 @@ const AreaChatInner = () => {
               onChange={(e) => setDraft(e.target.value)}
               placeholder={
                 connected
-                  ? "Type a message…  (try /update for weather)"
+                  ? "Type a message…  (/ask for AI · /update for weather)"
                   : "Waiting for connection…"
               }
               disabled={!connected}
