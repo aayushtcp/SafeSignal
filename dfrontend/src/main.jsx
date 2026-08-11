@@ -28,6 +28,11 @@ import { UserPreferencesProvider } from "./context/UserPreferencesContext.jsx";
 import PageNotFound from "./pages/PageNotFound.jsx";
 import About from "./pages/About.jsx";
 import AreaChat from "./pages/AreaChat.jsx";
+import { setupForegroundMessaging } from "./firebase.js";
+
+if (typeof window !== "undefined") {
+  setupForegroundMessaging();
+}
 
 let urls = createBrowserRouter([
   {

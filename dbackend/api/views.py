@@ -80,7 +80,8 @@ def register_view(request):
     user_type = request.data.get("user_type", "Normal")
     latitude = request.data.get("latitude")
     longitude = request.data.get("longitude")
-    fcm_token = request.data.get("fcm_token")
+    fcm_token = request.data.get("fcm_token") or request.data.get("fcmToken")
+    device_type = request.data.get("device") or request.data.get("device_type") or "web"
 
     if not username or not password or not email:
         return Response(
@@ -140,6 +141,12 @@ def register_view(request):
         )
         print("Created UserProfile...")
 
+        if fcm_token:
+            FCMToken.objects.update_or_create(
+                fcm_token=fcm_token,
+                defaults={"user": user, "device_type": device_type},
+            )
+
         send_confirmation_email(user, request, action='signup')
         print("Confirmation email sent.")
 
@@ -157,17 +164,16 @@ def register_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def register_fcm_token(request):
-    fcm_token = request.data.get('fcmToken')
-    device_type = request.data.get('device', 'unknown')
+    fcm_token = request.data.get('fcmToken') or request.data.get('fcm_token')
+    device_type = request.data.get('device') or request.data.get('device_type') or 'unknown'
     print(f"===[ Token Received ]===: {fcm_token}")
     if not fcm_token:
         return Response({"detail": "FCM token is required."}, status=400)
 
-    # Only create, do not update existing tokens
-    FCMToken.objects.create(
-        user=request.user,
+    # Upsert: same token on re-login / account switch reassigns to current user
+    FCMToken.objects.update_or_create(
         fcm_token=fcm_token,
-        device_type=device_type
+        defaults={"user": request.user, "device_type": device_type},
     )
 
     return Response({"detail": "Token registered successfully."})
@@ -318,15 +324,23 @@ def register_disaster(request):
             preferences = UserPreferences.objects.filter(user=profile.user).first()
             selected_radius = preferences.radius if preferences else 10.0
             selected_types = preferences.disaster_types if preferences and preferences.disaster_types else default_types
-            night_alerts = preferences.receive_night_alerts if preferences else True 
-            is_day = current_local_time(profile.latitude, profile.longitude)
-            print(f"The is_day is: {is_day} and user night aler is set to {night_alerts}")
+            night_alerts = preferences.receive_night_alerts if preferences else True
+            try:
+                is_day = current_local_time(profile.latitude, profile.longitude)
+            except Exception as e:
+                print(f"[WARN] Could not resolve local time for {username}: {e}")
+                is_day = True
+            print(f"The is_day is: {is_day} and user night alert is set to {night_alerts}")
+
+            if not is_day and not night_alerts:
+                print(f"[SKIP] {username} disabled night alerts")
+                continue
 
             distance_km = haversine(latitude, longitude, profile.latitude, profile.longitude)
             print(f"[CHECKING] {username} is {distance_km:.2f} km away (radius: {selected_radius} km)")
             print(f"[SELECTED TYPES] {selected_types}")
             if distance_km <= selected_radius and disaster_type.capitalize() in [d.capitalize() for d in selected_types]:
-                
+
                 tokens = FCMToken.objects.filter(user=profile.user)
                 if not tokens.exists():
                     print(f"[WARN] No FCM token found for {username}")
@@ -337,7 +351,8 @@ def register_disaster(request):
                     send_push_notification(
                         title=f"New {disaster_type} Reported!",
                         body=f"A {disaster_type} has been reported nearby. Stay alert!",
-                        fcm_token=token.fcm_token
+                        fcm_token=token.fcm_token,
+                        data={"disaster_type": disaster_type},
                     )
 
         print("========== [PROCESS COMPLETE] ==========")

@@ -84,12 +84,20 @@ const Login = () => {
 
       axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.access}`
 
-      // FCM token registration with error handling
-      if (fcmToken) {
+      // FCM token registration with error handling (refresh token if mount fetch failed)
+      let tokenToRegister = fcmToken
+      if (!tokenToRegister) {
+        try {
+          tokenToRegister = await generateToken()
+        } catch (_) {
+          tokenToRegister = null
+        }
+      }
+      if (tokenToRegister) {
         try {
           await axios.post(
             `${API_URL}/register-fcm-token/`,
-            { fcmToken, device: data.device },
+            { fcmToken: tokenToRegister, device: data.device || "web" },
             {
               headers: { "Content-Type": "application/json" },
               withCredentials: true,

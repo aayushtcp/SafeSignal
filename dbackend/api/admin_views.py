@@ -1,6 +1,10 @@
 from api.models import Disaster
+from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.db.models.functions import ExtractYear
+
+User = get_user_model()
+
 
 def get_disaster_counts():
     """
@@ -27,3 +31,16 @@ def disaster_counts_by_region():
     return list(
         Disaster.objects.values('continent').annotate(count=Count('id'))
     )
+
+
+def get_user_stats():
+    """
+    Returns total users plus simple breakdowns for the admin dashboard.
+    """
+    return {
+        'total': User.objects.count(),
+        'active': User.objects.filter(is_active=True).count(),
+        'verified': User.objects.filter(is_verified=True).count(),
+        'normal': User.objects.filter(user_type='Normal').count(),
+        'organization': User.objects.filter(user_type='Organization').count(),
+    }

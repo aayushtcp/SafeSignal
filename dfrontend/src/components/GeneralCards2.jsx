@@ -8,249 +8,236 @@ import {
   Wind,
   AlertTriangle,
   MapPin,
-  User,
+  ArrowUpRight,
   ThumbsUp,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useMemo } from "react";
+import { Link } from "react-router";
 import { useDisasters } from "../context/DisastersContext";
 
-// Add props to receive the appendVote function and votedDisasters from parent
-const GeneralCards = ({ appendVote, votedDisasters = [] }) => {
-  const { disastersbycontext } = useDisasters();
-  const [allDisasters, setAllDisasters] = useState([]);
-  const [upvotedDisasters, setUpvotedDisasters] = useState({});
-  const [isDarkMode, setIsDarkMode] = useState(false);
+const typeMeta = {
+  flood: {
+    label: "Flood",
+    icon: Droplets,
+    tone: "text-cyan-800 bg-cyan-100",
+    bar: "bg-cyan-600",
+  },
+  fire: {
+    label: "Fire",
+    icon: FlameKindling,
+    tone: "text-rose-800 bg-rose-100",
+    bar: "bg-rose-600",
+  },
+  landslide: {
+    label: "Landslide",
+    icon: Mountain,
+    tone: "text-lime-900 bg-lime-100",
+    bar: "bg-lime-700",
+  },
+  earthquake: {
+    label: "Earthquake",
+    icon: Activity,
+    tone: "text-orange-900 bg-orange-100",
+    bar: "bg-orange-600",
+  },
+  hurricane: {
+    label: "Hurricane",
+    icon: Wind,
+    tone: "text-sky-900 bg-sky-100",
+    bar: "bg-sky-600",
+  },
+  tornado: {
+    label: "Tornado",
+    icon: Wind,
+    tone: "text-sky-900 bg-sky-100",
+    bar: "bg-sky-600",
+  },
+};
 
-  useEffect(() => {
-    if (disastersbycontext && disastersbycontext.data) {
-      setAllDisasters(disastersbycontext.data);
+function normalizeDisasters(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.results)) return payload.results;
+  if (Array.isArray(payload.data)) return payload.data;
+  return [];
+}
+
+function getMeta(type) {
+  const key = String(type || "").toLowerCase();
+  return (
+    typeMeta[key] || {
+      label: type || "Alert",
+      icon: AlertTriangle,
+      tone: "text-slate-800 bg-slate-200",
+      bar: "bg-slate-600",
     }
+  );
+}
+
+const GeneralCards2 = ({ appendVote, votedDisasters = [] }) => {
+  const { disastersbycontext } = useDisasters();
+  const reduceMotion = useReducedMotion();
+
+  const disasters = useMemo(() => {
+    const list = normalizeDisasters(disastersbycontext);
+    return [...list]
+      .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
+      .slice(0, 6);
   }, [disastersbycontext]);
 
-  console.log("The data is: ", allDisasters);
-
-  // Function to determine background color and icon based on disaster type
-  const getDisasterDetails = (disasterType) => {
-    if (!disasterType)
-      return {
-        bgcolor: "bg-gray-400",
-        icon: <FlameKindling className="w-10 h-10 text-gray-700" />,
-        bgImage:
-          "url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop')",
-      };
-
-    switch (disasterType.toLowerCase()) {
-      case "flood":
-        return {
-          bgcolor: "bg-blue-400",
-          icon: <Droplets className="w-10 h-10 text-blue-700" />,
-          bgImage:
-            "url('https://images.unsplash.com/photo-1485617359743-4dc5d2e53c89?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
-        };
-      case "fire":
-        return {
-          bgcolor: "bg-red-400",
-          icon: <FlameKindling className="w-10 h-10 text-red-700" />,
-          bgImage:
-            "url('/cosmos.png')",
-            // "url('https://images.unsplash.com/photo-1517594422361-5eeb8ae275a9?q=80&w=1000&auto=format&fit=crop')",
-        };
-      case "landslide":
-        return {
-          bgcolor: "bg-green-400",
-          icon: <Mountain className="w-10 h-10 text-green-700" />,
-          bgImage:
-            "url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1000&auto=format&fit=crop')",
-        };
-      case "earthquake":
-        return {
-          bgcolor: "bg-orange-400",
-          icon: <Activity className="w-10 h-10 text-orange-700" />,
-          bgImage:
-            "url('https://images.unsplash.com/photo-1584314490734-6a1c3e47341d?q=80&w=1000&auto=format&fit=crop')",
-        };
-      case "hurricane":
-      case "tornado":
-        return {
-          bgcolor: "bg-cyan-400",
-          icon: <Wind className="w-10 h-10 text-cyan-700" />,
-          bgImage:
-            "url('https://images.unsplash.com/photo-1527482797697-8795b05a13fe?q=80&w=1000&auto=format&fit=crop')",
-        };
-      default:
-        return {
-          bgcolor: "bg-gray-400",
-          icon: <AlertTriangle className="w-10 h-10 text-gray-700" />,
-          bgImage:
-            "url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop')",
-        };
-    }
-  };
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: {
-      opacity: 0,
-      y: 20,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        damping: 15,
-        stiffness: 100,
-      },
-    },
-    hover: {
-      y: -8,
-      transition: {
-        type: "spring",
-        damping: 15,
-        stiffness: 300,
-      },
-    },
-  };
-
-  const iconVariants = {
-    hover: {
-      scale: 1.1,
-      rotate: 5,
-      transition: {
-        type: "spring",
-        damping: 10,
-        stiffness: 300,
-      },
-    },
-  };
-
-  const buttonVariants = {
-    hover: {
-      scale: 1.05,
-      transition: {
-        type: "spring",
-        damping: 10,
-        stiffness: 300,
-      },
-    },
-    tap: {
-      scale: 0.95,
-    },
-  };
-
   return (
-    <motion.div
-      className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 p-4"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+    <section
+      className="relative py-20 md:py-28"
+      style={{
+        background:
+          "radial-gradient(ellipse 60% 40% at 80% 0%, rgba(20,184,166,0.1), transparent 50%), #f7faf9",
+      }}
     >
-      {allDisasters.map((item, index) => {
-        // Check if this disaster has been voted on
-        const hasVoted = votedDisasters.includes(item.id);
-        const disasterDetails = getDisasterDetails(item.disasterType);
-
-        return (
-          <motion.div
-            key={index}
-            className="w-full rounded-3xl overflow-hidden shadow-xl"
-            variants={cardVariants}
-            whileHover="hover"
-          >
-            {/* Top section with cosmic background */}
-            <div
-              className="h-[180px] w-full bg-cover bg-center relative bg-[url(/cosmos.png)]"
-              // style={{
-              //   backgroundImage: disasterDetails.bgImage,
-              // }}
+      <div className="mx-auto max-w-6xl px-4 md:px-8 text-left">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-10 md:mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
+          <div>
+            <p
+              className="text-sm font-semibold tracking-[0.2em] uppercase text-teal-700 mb-3"
+              style={{
+                fontFamily: '"Syne", "Montserrat Alternates", sans-serif',
+              }}
             >
-              {/* Title centered */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                variants={iconVariants}
-              >
-                <h3 className="text-xl text-white font-bold font-sans">
-                  {/* {item.disasterType.toUpperCase()} */}
-                  {item.disasterType.charAt(0).toUpperCase() + item.disasterType.slice(1).toLowerCase()}
-                </h3>
-              </motion.div>
+              Live feed
+            </p>
+            <h2
+              className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]"
+              style={{
+                fontFamily: '"Syne", "Montserrat Alternates", sans-serif',
+              }}
+            >
+              Recent disaster signals
+            </h2>
+            <p className="mt-3 text-slate-600 max-w-lg text-base md:text-lg">
+              Community-reported events ranked by signal strength.
+            </p>
+          </div>
+          <Link
+            to="/disaster-list"
+            className="inline-flex items-center gap-2 self-start sm:self-auto text-sm font-semibold text-teal-800 border-b border-teal-700/40 pb-0.5 hover:border-teal-900 transition-colors"
+          >
+            View all disasters
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
 
-              {/* Curved bottom edge */}
-              <div className="absolute bottom-0 left-0 right-0 h-[20px] bg-white rounded-t-[8px]"></div>
+        {disasters.length === 0 ? (
+          <div className="border border-dashed border-slate-300 px-6 py-16 text-center text-slate-500">
+            No active signals yet. Be the first to{" "}
+            <Link
+              to="/register-disaster"
+              className="font-semibold text-teal-800 underline-offset-2 hover:underline"
+            >
+              report a disaster
+            </Link>
+            .
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-slate-200 border-y border-slate-200">
+            {disasters.map((item, index) => {
+              const meta = getMeta(item.disasterType);
+              const Icon = meta.icon;
+              const hasVoted = votedDisasters.includes(item.id);
+              const description = String(item.description || "");
+              const truncated =
+                description.length > 120
+                  ? `${description.slice(0, 117)}...`
+                  : description;
 
-              {/* Upvote counter */}
-              <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                <ThumbsUp className="w-4 h-4 text-white" />
-                <span className="text-sm font-medium text-white">
-                  {item.upvotes || 0}
-                </span>
-              </div>
-            </div>
+              return (
+                <motion.li
+                  key={item.id ?? index}
+                  initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{
+                    duration: 0.45,
+                    delay: reduceMotion ? 0 : index * 0.05,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="group relative"
+                >
+                  <div
+                    className={`absolute left-0 top-0 h-full w-1 opacity-0 transition-opacity group-hover:opacity-100 ${meta.bar}`}
+                  />
+                  <div className="flex flex-col gap-4 py-6 pl-3 pr-1 sm:flex-row sm:items-center sm:gap-6 md:pl-4">
+                    <div
+                      className={`inline-flex h-12 w-12 shrink-0 items-center justify-center ${meta.tone}`}
+                    >
+                      <Icon className="h-5 w-5" strokeWidth={2} />
+                    </div>
 
-            {/* Content section */}
-            <div className="flex items-center justify-center">
-              {disasterDetails.icon}
-            </div>
-            <div className="px-6 pb-8 pt-4">
-              <h4 className="text-center font-bold">
-                {item.disasterType.charAt(0).toUpperCase() + item.disasterType.slice(1).toLowerCase()}
-              </h4>
-              <p className="text-center text-sm mb-6 px-4 text-slate-700 h-[60px] overflow-hidden">
-                {item.description.length > 100
-                  ? item.description.slice(0, 89) + "..."
-                  : item.description}
-              </p>
-              
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h3
+                          className="text-lg md:text-xl font-bold text-slate-900 tracking-tight"
+                          style={{
+                            fontFamily:
+                              '"Syne", "Montserrat Alternates", sans-serif',
+                          }}
+                        >
+                          {meta.label}
+                        </h3>
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {item.location || item.country || "Unknown location"}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-sm md:text-base text-slate-600 leading-relaxed">
+                        {truncated || "No description provided."}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-400">
+                        Reported by{" "}
+                        {item.triggeredBy_username || "Anonymous"}
+                      </p>
+                    </div>
 
-              <div className="flex justify-center gap-6 mb-6">
-                <div className="flex items-center gap-2">
-                  {/* <MapPin className="w-5 h-5 text-purple-400" /> */}
-                  <p className="text-2xl">📌</p>
-                  <span className="text-xs text-slate-700">
-                    {item.location || "Unknown"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* <User className="w-5 h-5 text-purple-400" /> */}
-                  <p className="text-2xl">🧑🏻‍🦰</p>
-                  <span className="text-xs text-slate-700">
-                    {item.triggeredBy_username || "Anonymous"}
-                  </span>
-                </div>
-              </div>
+                    <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+                      <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                        <ThumbsUp className="h-4 w-4" />
+                        {item.upvotes || 0}
+                      </div>
 
-              <motion.button
-                className="w-full py-3 rounded-full flex items-center justify-center gap-2 text-white font-medium"
-                variants={buttonVariants}
-                whileHover={!hasVoted ? "hover" : undefined}
-                whileTap={!hasVoted ? "tap" : undefined}
-                onClick={() => appendVote(item.id)}
-                disabled={hasVoted}
-                style={{
-                  backgroundColor: hasVoted ? "#9CA3AF" : "#6949ff",
-                  cursor: hasVoted ? "not-allowed" : "pointer",
-                }}
-              >
-                <ThumbsUp className="w-5 h-5" />
-                {hasVoted ? "Voted" : "UpVote"}
-              </motion.button>
-            </div>
-          </motion.div>
-        );
-      })}
-    </motion.div>
+                      <div className="flex items-center gap-2">
+                        {typeof appendVote === "function" && (
+                          <button
+                            type="button"
+                            disabled={hasVoted}
+                            onClick={() => appendVote(item.id)}
+                            className="px-3 py-1.5 text-xs font-semibold border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:border-teal-700 hover:text-teal-800 transition-colors"
+                          >
+                            {hasVoted ? "Voted" : "Upvote"}
+                          </button>
+                        )}
+                        <Link
+                          to={`/disaster-detail/${item.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-slate-900 text-white hover:bg-teal-800 transition-colors"
+                        >
+                          Open
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </motion.li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </section>
   );
 };
 
-export default GeneralCards;
+export default GeneralCards2;

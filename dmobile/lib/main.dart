@@ -6,6 +6,7 @@ import 'package:dmobile/pages/home_page.dart';
 import 'package:dmobile/pages/login_page.dart';
 import 'package:dmobile/pages/notification_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dmobile/providers/auth_provider.dart';
@@ -15,6 +16,10 @@ final navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Register before runApp so background isolate can use it
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await FirebaseApi().initNotifications();
 
   runApp(const MyApp());
@@ -37,7 +42,6 @@ class MyApp extends StatelessWidget {
         },
         home: Consumer<AuthProvider>(
           builder: (context, authProvider, child) {
-            // Conditional routing based on authentication status
             if (authProvider.isAuthenticated) {
               return const HomePage();
             } else {

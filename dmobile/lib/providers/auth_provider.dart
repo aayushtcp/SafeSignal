@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:dmobile/api/api_service.dart';
+import 'package:dmobile/api/firebase_api.dart';
 import 'package:dmobile/utils/secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../utils/api_url.dart';
-// import 'dart:convert';
 
 class AuthProvider extends ChangeNotifier {
   bool _isAuthenticated = false;
@@ -20,6 +20,8 @@ class AuthProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _isAuthenticated = true;
+        // Cold start / session restore: ensure FCM token is registered
+        await FirebaseApi.ensureTokenRegistered();
       } else {
         await SecureStorage.deleteToken();
         _isAuthenticated = false;
@@ -41,7 +43,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await SecureStorage.deleteToken();
+    await ApiService.logout();
     _isAuthenticated = false;
     notifyListeners();
   }

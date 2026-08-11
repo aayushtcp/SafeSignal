@@ -8,9 +8,7 @@ import {
   Settings,
   LogOut,
   Lock,
-  Search,
   MessageCircle,
-  icons,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FcLandscape, FcDonate } from "react-icons/fc";
@@ -19,7 +17,6 @@ import { FaVolcano } from "react-icons/fa6";
 import { AiFillSafetyCertificate } from "react-icons/ai";
 import { Link } from "react-router";
 import { useUsername } from "../context/UsernameContext";
-import axios from "axios";
 import {
   UserDetailsProvider,
   useUserDetails,
@@ -194,23 +191,26 @@ const NewNavigation = () => {
         <nav
           style={{
             boxShadow: "rgba(34, 197, 94, 0.3) 0px 50px 50px -20px inset",
-            // boxShadow: "rgba(255, 11, 245, 0.33) 0px 50px 50px -30px inset",
             backdropFilter: "blur(30px)",
             WebkitBackdropFilter: "blur(30px)",
           }}
-          className="sticky top-0 left-0 right-0 navbar flex justify-between flex-wrap bg-slate-50 p-4 md:p-5 lg:p-6 transition-all duration-500 ease"
+          className="navbar bg-slate-50 transition-all duration-500 ease"
         >
-          <div className="left text-gray-800">
-            <div className="menu flex gap-1 md:gap-2 cursor-pointer items-center h-full">
+          {/* Top bar: 3 equal columns keep logo truly centered */}
+          <div className="grid grid-cols-3 items-center gap-2 px-4 py-3 md:px-6 md:py-4 lg:px-8">
+            <div className="justify-self-start text-gray-800">
               <button
-                className="text-gray-800 focus:outline-none cursor-pointer transition-transform duration-500 ease"
+                type="button"
+                className="menu flex gap-1.5 md:gap-2 cursor-pointer items-center focus:outline-none"
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label={isOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isOpen}
               >
                 <motion.div
                   initial={false}
                   animate={{ rotate: isOpen ? 90 : 0 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="flex items-center"
                 >
                   {isOpen ? (
                     <X className="w-5 h-5 md:w-6 md:h-6" />
@@ -218,209 +218,195 @@ const NewNavigation = () => {
                     <MenuIcon className="w-5 h-5 md:w-6 md:h-6" />
                   )}
                 </motion.div>
+                <span className="text-sm md:text-xl font-sans font-bold leading-none">
+                  MENU
+                </span>
               </button>
-              <div className="text text-md md:text-xl font-sans font-bold">
-                MENU
-              </div>
             </div>
-          </div>
 
-          <div className="middle lg:pl-23 ">
-            <div className="logo h-10 w-10">
-              <Link to={"/"}>
+            <div className="justify-self-center">
+              <Link
+                to="/"
+                className="logo flex h-10 w-10 items-center justify-center"
+                aria-label="Home"
+              >
                 <img
-                  className="scale-170"
-                  style={{ objectFit: "cover" }}
+                  className="h-10 w-10 object-contain scale-150"
                   src="/logo3.png"
-                  alt="logo"
+                  alt="SafeSignal"
                 />
               </Link>
             </div>
-          </div>
 
-          <div className="right text-gray-800">
-            <ul className="flex gap-3 md:gap-5 lg:gap-7 items-center h-full">
-              {isAuthenticated ? (
-                <li
-                  className="flex gap-1 md:gap-2 cursor-pointer items-center relative"
-                  ref={profileRef}
-                >
-                  <div
-                    style={{
-                      backgroundImage: `url('${userDetailsFetched.profile_picture}')`,
-                      backgroundColor: "gainsboro",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                    className="rounded-full h-[40px] w-[40px] cursor-pointer flex items-center justify-center"
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+            <div className="justify-self-end text-gray-800">
+              <ul className="flex gap-3 md:gap-5 items-center">
+                {isAuthenticated ? (
+                  <li
+                    className="flex gap-1.5 md:gap-2 cursor-pointer items-center relative"
+                    ref={profileRef}
                   >
-                    {!userDetailsFetched.profile_picture && (
-                      <User className="h-6 w-6 text-gray-700" />
-                    )}
-                  </div>
-                  <span
-                    className="hidden font-bold font-sans md:inline p-2 cursor-pointer"
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  >
-                    {username?.username || "User"}
-                  </span>
-                  <motion.div
-                    initial={false}
-                    animate={{ rotate: isProfileOpen ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-gray-600"
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <div
+                      style={{
+                        backgroundImage: userDetailsFetched.profile_picture
+                          ? `url('${userDetailsFetched.profile_picture}')`
+                          : undefined,
+                        backgroundColor: "gainsboro",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                      className="rounded-full h-9 w-9 md:h-10 md:w-10 cursor-pointer flex items-center justify-center shrink-0"
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
                     >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </motion.div>
-
-                  {/* Profile Dropdown */}
-                  <AnimatePresence>
-                    {isProfileOpen && (
-                      <motion.div
-                        className="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg z-50"
-                        variants={dropdownVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
+                      {!userDetailsFetched.profile_picture && (
+                        <User className="h-5 w-5 text-gray-700" />
+                      )}
+                    </div>
+                    <span
+                      className="hidden font-bold font-sans md:inline cursor-pointer max-w-[8rem] truncate"
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    >
+                      {username?.username || "User"}
+                    </span>
+                    <motion.div
+                      initial={false}
+                      animate={{ rotate: isProfileOpen ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-gray-600 shrink-0"
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        <div className="rounded-md overflow-hidden">
-                          {/* Header with profile image */}
-                          <div className="bg-gray-700 p-3 flex items-center gap-3">
-                            <div
-                              style={{
-                                backgroundImage: `url('${userDetailsFetched.profile_picture}')`,
-                                backgroundColor: "gainsboro",
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                              }}
-                              className="bg-gray-300 border-green-300 border-3 bg-cover bg-center rounded-full h-[40px] w-[40px] flex items-center justify-center"
-                            >
-                              {!userDetailsFetched.profile_picture && (
-                                <User className="h-6 w-6 text-gray-700" />
-                              )}
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </motion.div>
+
+                    <AnimatePresence>
+                      {isProfileOpen && (
+                        <motion.div
+                          className="absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg z-50"
+                          variants={dropdownVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                        >
+                          <div className="rounded-md overflow-hidden">
+                            <div className="bg-gray-700 p-3 flex items-center gap-3">
+                              <div
+                                style={{
+                                  backgroundImage:
+                                    userDetailsFetched.profile_picture
+                                      ? `url('${userDetailsFetched.profile_picture}')`
+                                      : undefined,
+                                  backgroundColor: "gainsboro",
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                }}
+                                className="border-green-300 border-2 rounded-full h-10 w-10 flex items-center justify-center shrink-0"
+                              >
+                                {!userDetailsFetched.profile_picture && (
+                                  <User className="h-5 w-5 text-gray-700" />
+                                )}
+                              </div>
+                              <div className="text-white font-medium truncate">
+                                {username?.username || "User"}
+                              </div>
                             </div>
-                            <div className="text-white font-medium truncate">
-                              {username?.username || "User"}
+
+                            <div className="bg-white py-1">
+                              <Link
+                                to="/settings/profile"
+                                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                              >
+                                <User className="h-5 w-5" />
+                                <span>Account</span>
+                              </Link>
+                              <Link
+                                to="/settings"
+                                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                              >
+                                <Settings className="h-5 w-5" />
+                                <span>Settings</span>
+                              </Link>
+
+                              <div className="border-t border-gray-200" />
+
+                              <Link
+                                to="/logout"
+                                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                              >
+                                <LogOut className="h-5 w-5" />
+                                <span>Log Out</span>
+                              </Link>
                             </div>
                           </div>
-
-                          {/* Menu items */}
-                          <div className="bg-white py-1">
-                            <Link
-                              to="/settings/profile"
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                            >
-                              <User className="h-5 w-5" />
-                              <span>Account</span>
-                            </Link>
-                            <Link
-                              to="/settings"
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                            >
-                              <Settings className="h-5 w-5" />
-                              <span>Settings</span>
-                            </Link>
-
-                            <div className="border-t border-gray-200"></div>
-
-                            <Link
-                              to="/logout"
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                              onClick={async () => {
-                                try {
-                                  const accessToken =
-                                    localStorage.getItem("access_token");
-                                  if (accessToken) {
-                                    await axios.post(`${API_URL}/logout`, {
-                                      refresh_token: accessToken,
-                                    });
-                                    localStorage.removeItem("access_token");
-                                    setIsAuthenticated(false);
-                                  }
-                                } catch (error) {
-                                  console.error("Error during logout:", error);
-                                }
-                              }}
-                            >
-                              <LogOut className="h-5 w-5" />
-                              <span>Log Out</span>
-                            </Link>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </li>
-              ) : (
-                <>
-                  <li>
-                    <Link
-                      to="/register"
-                      className="flex items-center gap-2 text-gray-800 hover:text-gray-600 transition-colors"
-                    >
-                      <Lock className="h-5 w-5" />
-                      <span className="font-medium">Signup</span>
-                    </Link>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </li>
-                  <li>
-                    <Link
-                      to="/login"
-                      className="flex items-center gap-2 text-gray-800 hover:text-gray-600 transition-colors"
-                    >
-                      <User className="h-5 w-5" />
-                      <span className="font-medium">Login</span>
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
+                ) : (
+                  <>
+                    <li>
+                      <Link
+                        to="/register"
+                        className="flex items-center gap-2 text-gray-800 hover:text-gray-600 transition-colors"
+                      >
+                        <Lock className="h-5 w-5" />
+                        <span className="font-medium">Signup</span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/login"
+                        className="flex items-center gap-2 text-gray-800 hover:text-gray-600 transition-colors"
+                      >
+                        <User className="h-5 w-5" />
+                        <span className="font-medium">Login</span>
+                      </Link>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
           </div>
 
-          {/* AnimatePresence ensures animations complete before unmounting */}
           <AnimatePresence>
             {isOpen && (
               <motion.div
-                className="w-full overflow-hidden"
+                className="w-full overflow-hidden border-t border-slate-200/60"
                 variants={menuContainerVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
               >
-                {/* Added flex container with min-height to center content vertically */}
-                <div className="w-full min-h-[calc(100vh-10rem)] flex items-center justify-center">
-                  <div className="w-full px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 lg:gap-30 grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 text-gray-800 group">
+                <div className="w-full min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-10 sm:px-8 md:px-16">
+                  <div className="w-full max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-10 md:gap-x-12 md:gap-y-14 text-gray-800">
                     {menuItems.map((item, index) => (
                       <motion.div
-                        key={index}
-                        className={`flex flex-col gap-4 md:gap-6 items-center justify-center text-center
-                          ${index >= 3 ? "lg:px-[25rem]" : ""}`}
+                        key={item.label}
+                        className="flex flex-col items-center justify-center text-center"
                         variants={menuItemVariants}
                       >
                         <Link
                           to={item.url || "#"}
-                          className="text-center flex flex-col justify-center items-center gap-4 md:gap-6 font-medium text-base md:text-lg lg:text-xl"
+                          onClick={() => setIsOpen(false)}
+                          className="text-center flex flex-col justify-center items-center gap-3 md:gap-4 font-medium text-base md:text-lg lg:text-xl"
                         >
                           <motion.div
-                            className="text-2xl md:text-3xl lg:text-4xl"
+                            className="text-3xl md:text-4xl lg:text-5xl flex items-center justify-center h-14 w-14 md:h-16 md:w-16"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
                           >
                             {item.icon}
                           </motion.div>
-                          {item.label}
+                          <span className="leading-tight">{item.label}</span>
                         </Link>
                       </motion.div>
                     ))}

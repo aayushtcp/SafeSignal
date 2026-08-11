@@ -1,8 +1,48 @@
 from jet.dashboard.dashboard import Dashboard
 from jet.dashboard.modules import DashboardModule
 from django.utils.safestring import mark_safe
-from .admin_views import get_disaster_counts, get_disaster_counts_by_year, disaster_counts_by_region
+from .admin_views import (
+    get_disaster_counts,
+    get_disaster_counts_by_year,
+    disaster_counts_by_region,
+    get_user_stats,
+)
 import json
+
+
+class TotalUsersModule(DashboardModule):
+    title = 'Total Users'
+
+    def render(self):
+        stats = get_user_stats()
+        return mark_safe(f"""
+            <div style="padding: 20px 16px; text-align: center;">
+                <div style="font-size: 48px; font-weight: 700; color: #0f172a; line-height: 1;">
+                    {stats['total']}
+                </div>
+                <div style="margin-top: 8px; font-size: 13px; color: #64748b; font-weight: 500;">
+                    Registered users
+                </div>
+                <div style="display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 20px; font-weight: 600; color: #334155;">{stats['active']}</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Active</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 20px; font-weight: 600; color: #334155;">{stats['verified']}</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Verified</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 20px; font-weight: 600; color: #334155;">{stats['normal']}</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Normal</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 20px; font-weight: 600; color: #334155;">{stats['organization']}</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Organization</div>
+                    </div>
+                </div>
+            </div>
+        """)
 
 
 class DisasterPieChartModule(DashboardModule):
@@ -187,6 +227,42 @@ class CustomIndexDashboard(Dashboard):
     columns = 2
 
     def init_with_context(self, context):
-        self.children.append(DisasterPieChartModule())
-        self.children.append(DisasterContinentModule())
-        self.children.append(DisasterRateModule())
+        # available_children = widgets users can add via the "+" menu
+        self.available_children.append(TotalUsersModule)
+        self.available_children.append(DisasterPieChartModule)
+        self.available_children.append(DisasterContinentModule)
+        self.available_children.append(DisasterRateModule)
+
+        # Default layout for first-time dashboards
+        self.children.append(TotalUsersModule(column=0, order=0))
+        self.children.append(DisasterPieChartModule(column=0, order=1))
+        self.children.append(DisasterContinentModule(column=1, order=0))
+        self.children.append(DisasterRateModule(column=0, order=2))
+
+    def load_modules(self):
+        """Ensure Total Users appears even for already-saved Jet layouts."""
+        from jet.dashboard.models import UserDashboardModule
+
+        super().load_modules()
+
+        user = self.context['request'].user
+        module_path = TotalUsersModule().fullname()
+        already_present = any(
+            getattr(m, 'model', None) and m.model.module == module_path
+            for m in (self.modules or [])
+        )
+        if already_present:
+            return
+
+        model = UserDashboardModule.objects.create(
+            title=TotalUsersModule.title,
+            app_label=self.app_label,
+            user=user,
+            module=module_path,
+            column=0,
+            order=-1,  # pin above existing widgets
+            settings=TotalUsersModule().dump_settings(),
+            children=TotalUsersModule().dump_children(),
+        )
+        module = TotalUsersModule(model=model, context=self.context)
+        self.modules = [module] + list(self.modules or [])

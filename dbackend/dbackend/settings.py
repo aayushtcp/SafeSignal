@@ -15,7 +15,7 @@ from datetime import timedelta
 import os
 # firebase
 import firebase_admin
-from firebase_admin import credentials, messaging
+from firebase_admin import credentials
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -229,13 +229,15 @@ GROQ_API_KEY = (
 )
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile').strip()
 
-# # Construct the absolute path to the service account JSON file
-FIREBASE_CREDENTIALS_PATH = BASE_DIR / "api" / "static" / "safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json"
+# Firebase Admin SDK credentials (optional override via env)
+_default_firebase_creds = BASE_DIR / "api" / "static" / "safesignal-db902-firebase-adminsdk-fbsvc-8ccbec998e.json"
+_firebase_creds_env = os.environ.get("FIREBASE_CREDENTIALS_PATH", "").strip()
+FIREBASE_CREDENTIALS_PATH = Path(_firebase_creds_env) if _firebase_creds_env else _default_firebase_creds
 
 # Initialize Firebase when credentials are present (optional in local/Docker)
 if not firebase_admin._apps:
     if FIREBASE_CREDENTIALS_PATH.exists():
-        cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+        cred = credentials.Certificate(str(FIREBASE_CREDENTIALS_PATH))
         firebase_admin.initialize_app(cred)
     else:
         import logging

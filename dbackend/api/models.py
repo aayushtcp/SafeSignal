@@ -99,7 +99,7 @@ class ApproveOrganization(models.Model):
 # for multiple devices fcm token
 class FCMToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    fcm_token = models.CharField(max_length=255, unique=True)
+    fcm_token = models.TextField(unique=True)
     device_type = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

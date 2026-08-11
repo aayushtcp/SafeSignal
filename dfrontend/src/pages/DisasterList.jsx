@@ -1,62 +1,64 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import "../styles/DisasterList.css";
 import { Link } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
-// import { useDisasters } from "../context/DisastersContext";
-import GeneralCards from "../components/GeneralCards";
-import { useUsername } from "../context/UsernameContext";
+import { useUserDetails } from "../context/UserDetailsContext";
 import { API_URL } from "../context/myurl";
-import { UserDetailsProvider } from "../context/UserDetailsContext";
+
+const TYPE_FILTERS = [
+  "All",
+  "Fire",
+  "Flood",
+  "Landslide",
+  "Earthquake",
+  "Tornado",
+  "Hurricane",
+];
 
 const DisasterList = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [votes, setVotes] = useState(0);
+  const { userDetails } = useUserDetails();
+  const [loading, setLoading] = useState(true);
   const [disasters, setDisasters] = useState([]);
-  const [alreadyVoters, setAlreadyVoters] = useState([]);
-  const [user, setUser] = useState();
-  const [mapSrc, setMapSrc] = useState("");
-  // const { disasters2 } = useDisasters();
-  const username = useUsername();
+  const [user, setUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All");
+
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         const accessToken = localStorage.getItem("access_token");
-
         const response = await axios.get(`${API_URL}/disaster-list/`, {
           headers: {
             "Content-Type": "application/json",
             ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
           },
         });
-
-        if (response.data.data) {
-          // When logged in
+        if (cancelled) return;
+        if (response.data?.data) {
           setDisasters(response.data.data);
           setUser(response.data.logged_user);
         } else {
-          // When not logged in
-          setDisasters(response.data);
+          setDisasters(Array.isArray(response.data) ? response.data : []);
         }
       } catch (e) {
-        console.log("Something went wrong!", e);
-        setError("Error in Fetching Disaster List");
-        toast.error("Error in Fetching Disaster List");
+        console.error(e);
+        toast.error("Could not load disaster list");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [votes]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // To append the vote
   const appendVote = async (disasterId) => {
-    setError("");
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `${API_URL}/disaster/${disasterId}/vote/`,
         {},
         {
@@ -66,159 +68,271 @@ const DisasterList = () => {
           },
         }
       );
-
-      // Update the upvotes and voters immediately for the voted disaster
-      setDisasters((prevDisasters) =>
-        prevDisasters.map((d) =>
+      setDisasters((prev) =>
+        prev.map((d) =>
           d.id === disasterId
-        ? {
-            ...d,
-            upvotes: (d.upvotes || 0) + 1,
-            voters: d.voters ? [...d.voters, user] : [user],
-          }
-        : d
+            ? {
+                ...d,
+                upvotes: (d.upvotes || 0) + 1,
+                voters: d.voters ? [...d.voters, user] : [user],
+              }
+            : d
         )
       );
-      // Optionally update alreadyVoters
-      setAlreadyVoters((prev) =>
-        prev.includes(user) ? prev : [...prev, user]
-      );
-
-      toast.success("Vote recorded successfully!");
-
-      setVotes((prev) => prev + 1);
+      toast.success("Vote recorded");
     } catch (error) {
       if (!localStorage.getItem("access_token")) {
-        setError("User is not Logged in");
-        // toast.error("Sign up and Login Required for vote");
-        toast("Sign up and Login Required for vote", {
-          icon: "⚠️",
-          style: {
-            background: "#333",
-            color: "#fff",
-          },
-        });
-      } else if (error.response && error.response.status === 400) {
-        setError("You have already voted for this disaster.");
-        toast.error("You have already voted for this disaster.");
-        const extractedUsernames = error.response.data.alreadyvoters.map(
-          (user) => user.username
-        );
-        setAlreadyVoters(extractedUsernames);
+        toast("Sign in to upvote", { icon: "⚠️" });
+      } else if (error.response?.status === 400) {
+        toast.error("You already voted for this disaster");
       } else {
-        setError("Failed to update votes.");
-        toast.error("Failed to update votes.");
+        toast.error("Failed to update votes");
       }
     }
   };
 
-  // Get the list of disaster IDs that the current user has voted for
-  const votedDisasterIds = disasters
-  .filter((disaster) => disaster.voters?.includes(user))
-  .map((disaster) => disaster.id);
-  
+  const handleTakeAction = async (disasterId) => {
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      const response = await axios.patch(
+        `${API_URL}/disaster/${disasterId}/take-action/`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+          },
+        }
+      );
+      if (response.status === 200) {
+        toast.success("You are now handling this disaster");
+        setDisasters((prev) =>
+          prev.map((d) =>
+            d.id === disasterId
+              ? { ...d, handled_by: userDetails?.username || "You" }
+              : d
+          )
+        );
+      }
+    } catch {
+      toast.error("Disaster is already handled");
+    }
+  };
+
+  const handleDelete = async (disasterId) => {
+    if (!window.confirm("Delete this disaster report?")) return;
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      await axios.delete(`${API_URL}/disaster/${disasterId}/delete/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setDisasters((prev) => prev.filter((d) => d.id !== disasterId));
+      toast.success("Report deleted");
+    } catch {
+      toast.error("Failed to delete report");
+    }
+  };
+
+  const votedDisasterIds = useMemo(
+    () => disasters.filter((d) => d.voters?.includes(user)).map((d) => d.id),
+    [disasters, user]
+  );
+
+  const filtered = useMemo(() => {
+    return disasters
+      .filter((item) => {
+        const type = String(item.disasterType || "");
+        const matchesType =
+          typeFilter === "All" ||
+          type.toLowerCase() === typeFilter.toLowerCase();
+        const q = searchTerm.trim().toLowerCase();
+        const matchesSearch =
+          !q ||
+          type.toLowerCase().includes(q) ||
+          String(item.description || "")
+            .toLowerCase()
+            .includes(q) ||
+          String(item.location || item.country || "")
+            .toLowerCase()
+            .includes(q);
+        return matchesType && matchesSearch;
+      })
+      .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+  }, [disasters, searchTerm, typeFilter]);
+
+  const isOrg = userDetails?.user_type === "Organization";
+
   return (
     <>
-      <Toaster />
+      <Toaster position="top-center" />
       <Navigation />
 
-      {/* Loading indicator */}
-      {loading && (
-        <div className="loading-container">
-          <div className="loading-indicator">Loading disasters...</div>
-        </div>
-      )}
+      <main className="bg-[#e6e9ec] text-[#121417] min-h-screen">
+        <header className="max-w-5xl mx-auto px-5 md:px-8 pt-8 md:pt-10 pb-4">
+          <p
+            className="text-[2.4rem] sm:text-5xl md:text-6xl font-extrabold leading-[0.9] tracking-tight text-[#121417]"
+            style={{ fontFamily: "Syne, sans-serif" }}
+          >
+            SafeSignal
+          </p>
+          <h1
+            className="mt-2 text-xl md:text-2xl font-medium text-[#2a3038] max-w-md"
+            style={{ fontFamily: "Syne, sans-serif" }}
+          >
+            Disaster board
+          </h1>
+          <p className="mt-2 max-w-md text-[15px] leading-snug text-[#3d4450]">
+            Reports from people on the ground. Vote if you can confirm; open
+            anything that needs your eyes.
+          </p>
+        </header>
 
-      {/* Cards Section - Now at the top */}
-      <div className="cards-section">
-        <h3 className="font-bold text-2xl text-center">
-          Disaster <span className="text-purple-700">List</span>{" "}
-        </h3>
-        {/* Pass the appendVote function and votedDisasterIds to GeneralCards */}
-        {/* <UserDetailsProvider> */}
-          <GeneralCards
-            disasters={disasters}
-            appendVote={appendVote}
-            votedDisasters={votedDisasterIds}
-          />
-        {/* </UserDetailsProvider> */}
-      </div>
-
-      <div className="relative bg-purple-600 min-h-[60vh] flex items-center overflow-hidden">
-        {/* Background circles - more precise positioning to match figure */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[90vh] h-[90vh] rounded-full bg-purple-500/30"></div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[70vh] h-[70vh] rounded-full bg-purple-400/30"></div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[50vh] h-[50vh] rounded-full bg-purple-300/30"></div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 w-[30vh] h-[30vh] rounded-full bg-purple-200/30"></div>
-        </div>
-
-        {/* Content - adjusted to match figure layout */}
-        <div className="relative z-10 container mx-auto px-8 py-20">
-          <div className="max-w-4xl">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-              Disaster Tracker
-            </h1>
-            <p className="text-white text-xl md:text-2xl mb-10 max-w-2xl">
-              Stay informed about disasters worldwide and help by upvoting to
-              increase awareness.
-            </p>
-
-            {/* Stats Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center mb-10">
-              <div className="p-5 bg-white/20 backdrop-blur-md rounded-lg shadow-lg">
-                <span className="text-3xl md:text-5xl font-semibold text-white">
-                  {disasters.length}
-                </span>
-                <p className="text-sm md:text-base text-white mt-2">
-                  Disasters Tracked
-                </p>
-              </div>
-              <div className="p-5 bg-white/20 backdrop-blur-md rounded-lg shadow-lg">
-                <span className="text-3xl md:text-5xl font-semibold text-white">
-                  {disasters.reduce(
-                    (sum, disaster) => sum + (disaster.upvotes || 0),
-                    0
-                  )}
-                </span>
-                <p className="text-sm md:text-base text-white mt-2">
-                  Total Votes
-                </p>
-              </div>
-              <div className="p-5 bg-white/20 backdrop-blur-md rounded-lg shadow-lg">
-                <span className="text-3xl md:text-5xl font-semibold text-white">
-                  {alreadyVoters.length}
-                </span>
-                <p className="text-sm md:text-base text-white mt-2">
-                  Active Voters
-                </p>
-              </div>
-            </div>
-
-            {/* User Section - styled to match figure buttons */}
-            {user ? (
-              <div className="mt-6 text-lg font-semibold">
-                <span className="px-6 py-3 bg-green-500 rounded-full shadow-md text-white inline-block">
-                  Welcome, {user}!
-                </span>
-              </div>
-            ) : (
-              <div className="mt-6">
-                <p className="text-xl text-white mb-4">
-                  Sign in to upvote disasters and help spread awareness
-                </p>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center justify-between bg-black text-white px-8 py-4 rounded-full hover:bg-black/80 transition-colors shadow-lg"
-                >
-                  <span>Sign In</span>
-                  <span className="ml-3 w-5 h-5 bg-white rounded-full"></span>
+        <div className="max-w-5xl mx-auto px-5 md:px-8 pb-20">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#121417]/20 pb-4 mb-2">
+            <label className="flex-1 block">
+              <span className="sr-only">Search</span>
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Find a place or type…"
+                className="w-full bg-transparent border-0 border-b-2 border-transparent focus:border-[#121417] outline-none py-2 text-lg placeholder:text-[#7a8290]"
+              />
+            </label>
+            <div className="flex items-center gap-4 text-sm shrink-0 pb-2">
+              {user ? (
+                <span className="text-[#4a5260]">Hi, {user}</span>
+              ) : (
+                <Link to="/login" className="underline underline-offset-4">
+                  Sign in to vote
                 </Link>
-              </div>
-            )}
+              )}
+              <Link
+                to="/register-disaster"
+                className="bg-[#d6452f] text-white px-4 py-2 font-semibold hover:bg-[#b93825] transition-colors"
+              >
+                Report
+              </Link>
+            </div>
           </div>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1 py-4 text-sm">
+            {TYPE_FILTERS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTypeFilter(t)}
+                className={
+                  typeFilter === t
+                    ? "font-bold text-[#d6452f] underline underline-offset-4"
+                    : "text-[#4a5260] hover:text-[#121417]"
+                }
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <p className="py-16 text-[#4a5260]">Loading reports…</p>
+          ) : filtered.length === 0 ? (
+            <p className="py-16 text-[#4a5260]">
+              Nothing here yet.{" "}
+              <Link to="/register-disaster" className="underline">
+                File a report
+              </Link>
+              .
+            </p>
+          ) : (
+            <ol className="divide-y divide-[#121417]/12">
+              {filtered.map((item, index) => {
+                const hasVoted = votedDisasterIds.includes(item.id);
+                const type = item.disasterType || "Alert";
+                const reporter =
+                  item.triggeredBy_username || item.triggeredBy || "Anonymous";
+                const place =
+                  item.location || item.country || "Unknown location";
+
+                return (
+                  <li
+                    key={item.id ?? index}
+                    className="py-7 grid grid-cols-[3rem_1fr] sm:grid-cols-[4.5rem_1fr_auto] gap-x-4 gap-y-3"
+                  >
+                    <span
+                      className="text-3xl sm:text-4xl font-bold text-[#d6452f]/75 leading-none pt-1 tabular-nums"
+                      style={{ fontFamily: "Syne, sans-serif" }}
+                    >
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h2
+                          className="text-2xl md:text-[1.65rem] font-bold tracking-tight"
+                          style={{ fontFamily: "Syne, sans-serif" }}
+                        >
+                          {type}
+                        </h2>
+                        <span className="text-sm text-[#4a5260]">{place}</span>
+                      </div>
+                      <p className="mt-2 text-[15px] leading-relaxed text-[#1f2430] max-w-2xl">
+                        {item.description || "No description provided."}
+                      </p>
+                      <p className="mt-3 text-xs text-[#6a7280]">
+                        by {reporter}
+                        {item.handled_by
+                          ? ` · handled by ${item.handled_by}`
+                          : ""}
+                        {userDetails?.username === reporter && (
+                          <>
+                            {" · "}
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(item.id)}
+                              className="underline text-[#d6452f]"
+                            >
+                              delete
+                            </button>
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2 sm:col-span-1 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 sm:pt-1">
+                      <span className="text-sm tabular-nums text-[#4a5260]">
+                        {item.upvotes || 0} votes
+                      </span>
+                      <button
+                        type="button"
+                        disabled={hasVoted}
+                        onClick={() => appendVote(item.id)}
+                        className="text-sm font-semibold underline underline-offset-4 disabled:no-underline disabled:opacity-40"
+                      >
+                        {hasVoted ? "Voted" : "Upvote"}
+                      </button>
+                      {isOrg && !item.handled_by && (
+                        <button
+                          type="button"
+                          onClick={() => handleTakeAction(item.id)}
+                          className="text-sm underline underline-offset-4"
+                        >
+                          Take action
+                        </button>
+                      )}
+                      <Link
+                        to={`/disaster-detail/${item.id}`}
+                        className="text-sm font-semibold bg-[#121417] text-[#e6e9ec] px-3 py-1.5 hover:bg-[#d6452f] transition-colors"
+                      >
+                        Open
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
         </div>
-      </div>
+      </main>
 
       <Footer />
     </>
