@@ -40,8 +40,7 @@ def _api_key() -> str:
 
 
 def _model() -> str:
-    return (getattr(settings, "GROQ_MODEL", None) or "llama-3.3-70b-versatile").strip()
-
+    return (getattr(settings, "GROQ_MODEL", None) or "openai/gpt-oss-120b").strip()
 
 def _rate_limit_ok(user_key: str) -> bool:
     now = time.monotonic()

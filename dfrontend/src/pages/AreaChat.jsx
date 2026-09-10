@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, Wifi, WifiOff, X, AlertTriangle } from "lucide-react";
+import { MessageCircle, Send, Wifi, WifiOff, X, AlertTriangle, Loader2 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
@@ -36,7 +36,10 @@ const AreaChatInner = () => {
 
   const [areaInput, setAreaInput] = useState(initialArea);
   const [draft, setDraft] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const listRef = useRef(null);
+  const aiPendingRef = useRef(0);
+  const aiTimeoutRef = useRef(null);
 
   const {
     status,
@@ -57,7 +60,39 @@ const AreaChatInner = () => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, aiLoading]);
+
+  // Clear AI loading when a bot reply arrives after the request
+  useEffect(() => {
+    if (!aiLoading) return;
+    if (messages.length > aiPendingRef.current) {
+      const newMsgs = messages.slice(aiPendingRef.current);
+      const hasBotReply = newMsgs.some((m) => m.sender === "SafeSignal Bot");
+      if (hasBotReply) {
+        setAiLoading(false);
+      }
+    }
+  }, [messages, aiLoading]);
+
+  // Safety timeout: don't stay loading forever
+  useEffect(() => {
+    if (aiLoading) {
+      aiTimeoutRef.current = setTimeout(() => setAiLoading(false), 30000);
+    } else if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+      aiTimeoutRef.current = null;
+    }
+    return () => {
+      if (aiTimeoutRef.current) {
+        clearTimeout(aiTimeoutRef.current);
+      }
+    };
+  }, [aiLoading]);
+
+  // Also clear loading on error/disconnect so button doesn't stay disabled
+  useEffect(() => {
+    if (error && aiLoading) setAiLoading(false);
+  }, [error, aiLoading]);
 
   const joinArea = (e) => {
     e.preventDefault();
@@ -70,10 +105,18 @@ const AreaChatInner = () => {
   const onSend = (e) => {
     e.preventDefault();
     if (!draft.trim()) return;
+    if (aiLoading) return;
+    const trimmed = draft.trim();
+    const isAiQuery = trimmed.toLowerCase().startsWith("/ask");
+    if (isAiQuery) {
+      aiPendingRef.current = messages.length;
+      setAiLoading(true);
+    }
     const ok = sendChat(draft);
     if (ok) {
       setDraft("");
     } else {
+      if (isAiQuery) setAiLoading(false);
       toast.error("Not connected — try Reconnect");
     }
   };
@@ -169,7 +212,7 @@ const AreaChatInner = () => {
             <button
               key={chip.label}
               type="button"
-              disabled={!connected}
+              disabled={!connected || aiLoading}
               onClick={() => setDraft(chip.text)}
               className="rounded-lg border border-emerald-200 bg-white/90 px-2.5 py-1.5 text-xs font-medium text-emerald-900 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
             >
@@ -315,6 +358,12 @@ const AreaChatInner = () => {
                 </div>
               );
             })}
+            {aiLoading && (
+              <div className="rounded-lg px-3 py-2 max-w-[90%] bg-teal-50 border border-teal-100 flex items-center gap-2">
+                <Loader2 size={14} className="animate-spin text-teal-700 shrink-0" />
+                <span className="text-sm text-teal-800">SafeSignal AI is thinking…</span>
+              </div>
+            )}
           </div>
 
           <form
@@ -325,20 +374,31 @@ const AreaChatInner = () => {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={
-                connected
-                  ? "Type a message…  (/ask for AI · /update for weather)"
-                  : "Waiting for connection…"
+                aiLoading
+                  ? "AI is thinking…"
+                  : connected
+                    ? "Type a message…  (/ask for AI · /update for weather)"
+                    : "Waiting for connection…"
               }
-              disabled={!connected}
+              disabled={!connected || aiLoading}
               className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-stone-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={!connected || !draft.trim()}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-800 text-white px-4 py-2.5 font-medium hover:bg-emerald-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={!connected || !draft.trim() || aiLoading}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-800 text-white px-4 py-2.5 font-medium hover:bg-emerald-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[96px]"
             >
-              <Send size={16} />
-              Send
+              {aiLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Send size={16} />
+                  Send
+                </>
+              )}
             </button>
           </form>
         </div>
