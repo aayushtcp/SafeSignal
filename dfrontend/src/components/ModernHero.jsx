@@ -114,14 +114,14 @@ export default function ModernHero() {
                 </div>
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden">
                   <img
-                    src="/aayam.jpg"
+                    src="/rohan.png"
                     alt="Customer 2"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden">
                   <img
-                    src="/aayam.jpg"
+                    src="/rohan.png"
                     alt="Customer 3"
                     className="w-full h-full object-cover"
                   />

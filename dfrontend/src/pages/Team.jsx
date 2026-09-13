@@ -44,13 +44,13 @@ const Team = () => {
 
   const developers = [
     {
-      name: "Aayam Awal",
+      name: "Rohan Bista",
       role: "Frontend Developer",
       description:
         "Passionate about creating beautiful, responsive user interfaces with React and modern web technologies. Specializes in turning complex problems into simple, elegant solutions that users love.",
       longDescription:
-        "With 1+ years of experience in frontend development, Aayam lex has a keen eye for design and user experience. When not coding, you'll find Alex exploring new design trends, contributing to open-source projects, or enjoying a perfect cup of coffee.",
-      image: "/aayam.jpg",
+        "With 1+ years of experience in frontend development, Rohan has a keen eye for design and user experience. When not coding, you'll find Rohan exploring new design trends, contributing to open-source projects, or enjoying a perfect cup of coffee.",
+      image: "/rohan.png",
       skills: ["React", "TypeScript", "Tailwind CSS", "Next.js", "Framer Motion", "Figma"],
       experience: "Student",
       location: "Makawanpur, Nepal",

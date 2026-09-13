@@ -5,17 +5,7 @@ import {
   BellRing,
   Activity,
   FlameKindling,
-  Droplets,
-  Mountain,
-  Wind,
-  AlertTriangle,
-  MapPin,
-  User,
-  ThumbsUp,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router";
-
 
 const Hero = () => {
   return (
